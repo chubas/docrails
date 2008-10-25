@@ -3,4 +3,29 @@ Guia de asociacione sde Active Record.
 
 Esta guía abarca las características de las asociaciones de Active Record. A partir de esta guía ud. podrá:
 
+* Declarar asociaciones entre modelos Active Record
+* Comprender los diferentes tipos de asociaciones de Active Record
+* Usar los métodos agregados a sus modelos por la creación de las asociaciones
+
+== ¿Por qué Asociaciones ?
+
+¿Por qué necesitamos asociaciones entre los modelos? Porque hacen más simples y fáciles las operaciones comunes su código. Por ejemplo, considere una aplicación Rails que incluye un modelo para los clientes y un modelo para los pedidos. Cada cliente puede tener muchos pedidos. Sin las asociaciones, las declaraciones del modelo se verían así:
+
+[source, ruby]
+-------------------------------------------------------
+class Cliente < ActiveRecord::Base
+end
+
+class Pedido < ActiveRecord::Base
+end
+-------------------------------------------------------
+
+Ahora supongamos que queremos agregar un nuevo pedido para un cliente existente. Deberíamos tener que hacer algo como esto:
+
+[source, ruby]
+-------------------------------------------------------
+@pedido = Pedido.create(:order_date => Time.now, :customer_id => @customer.id)
+-------------------------------------------------------
+
+
 
