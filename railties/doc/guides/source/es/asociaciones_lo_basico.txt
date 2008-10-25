@@ -1,0 +1,6 @@
+Guia de asociacione sde Active Record.
+======================================
+
+Esta guía abarca las características de las asociaciones de Active Record. A partir de esta guía ud. podrá:
+
+
