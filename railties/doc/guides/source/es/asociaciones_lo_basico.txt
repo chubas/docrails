@@ -11,7 +11,7 @@ Esta guía abarca las características de las asociaciones de Active Record. A p
 
 == ¿Por qué Asociaciones ?
 
-¿Por qué necesitamos asociaciones entre los modelos? Porque hacen más simples y fáciles las operaciones comunes su código. Por ejemplo, considere una aplicación Rails que incluye un modelo para los clientes y un modelo para los pedidos. Cada cliente puede tener muchos pedidos. Sin las asociaciones, las declaraciones del modelo se verían así:
+¿Por qué necesitamos asociaciones entre los modelos? Porque hacen más simples y fáciles las operaciones comunes en su código. Por ejemplo, considere una aplicación Rails que incluye un modelo para los clientes y un modelo para los pedidos. Cada cliente puede tener muchos pedidos. Sin las asociaciones, las declaraciones del modelo se verían así:
 
 [source, ruby]
 -------------------------------------------------------
@@ -108,3 +108,17 @@ end
 
 image:images/has_one.png[has_one Association Diagram]
 
+=== La asociación +has_many+ (n. del t. Tiene muchos)
+
+Una asociación +has_many+ establece una conexión uno-a-muchos con el otro modelo. Econtrará a menudo esta asociación del "otro lado" de una asociación +belogns_to+. Esta asociación indica que cada instancia del modelo tiene cero o más instancias del otro modelo. Por ejemplo, en una aplicación que tiene clientes y pedidos, el modelo de cliente podría declararse así:
+
+[source, ruby]
+-------------------------------------------------------
+class Customer < ActiveRecord::Base
+  has_many :orders
+end
+-------------------------------------------------------
+
+NOTA: El nombre del otro modelo se pluraliza cuando declaramos una asociación +has_many+.
+
+image:images/has_many.png[has_many Association Diagram]
