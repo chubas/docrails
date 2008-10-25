@@ -60,6 +60,17 @@ Con este cambio, crear un nuevo pedido para un cliente es más fácil:
 @order = @customer.orders.create(:order_date => Time.now)
 -------------------------------------------------------
 
+Eliminar un cliente y todos sus pedidos es _mucho_ más fácil:
 
+[source, ruby]
+-------------------------------------------------------
+@customer.destroy
+-------------------------------------------------------
+
+Para aprender más acerca de los diferentes tipos de asociaciones, lea la siguiente sección de esta Guía. Lo que sigue son algunos consejos y trucos para trabajar con asociaciones, y luego una referencia completa de los métodos y opciones para las asociaciones en Rails.
+
+== Los tipos de las asociaciones
+
+En Rails, una _asociación_ es una conexión entre dos modelos Active Record. Las asociaciones están implementadas usando llamadas de macro-estilo, entonces ud. puede agregar características declarativamente a sus modelos. Por ejemplo, declarando que un modelo +pertenece a+ (n.t. belongs_to) otro
 
 
