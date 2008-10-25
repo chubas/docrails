@@ -1,0 +1,4 @@
+Active Record, lo básico
+========================
+
+Active Record es un patrón de diseño mitiga la mente-adormecida de los gimnastas mentales que a menudo necesitan que su aplicación se comunique con una base de datos. Esta guía explica en detalle.
