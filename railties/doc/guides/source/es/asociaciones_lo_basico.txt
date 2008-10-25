@@ -122,3 +122,29 @@ end
 NOTA: El nombre del otro modelo se pluraliza cuando declaramos una asociación +has_many+.
 
 image:images/has_many.png[has_many Association Diagram]
+
+=== La asociación +has_many :through+ (n. del t. tiene muchos a traves)
+
+Una asociación +has_many :through+ se usada frecuentemente para establecer una coexión de muchos-amuchos con otro modelo. Esta asociación indica que un el modelo dónde se hace la declaración puede coincidir con cero o más instancias del otro modelo _a traves_ de un tercer modelo. Por ejemplo, considere una práctica médica dónde los pacientes tienen turnos para ver al médico. La asociación relevante podría ser así:
+
+[source, ruby]
+-------------------------------------------------------
+class Physician < ActiveRecord::Base
+  has_many :appointments
+  has_many :patients, :through => :appointments
+end
+
+class Appointment < ActiveRecord::Base
+  belongs_to :physician
+  belongs_to :patient
+end
+
+class Patient < ActiveRecord::Base
+  has_many :appointments
+  has_many :physicians, :through => :appointments
+end
+-------------------------------------------------------
+
+image:images/has_many_through.png[has_many :through Association Diagram]
+
+
