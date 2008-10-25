@@ -1,15 +1,17 @@
+<!-- -*- coding: utf-8; -*- -->
+
 Guia de asociacione sde Active Record.
 ======================================
 
-Esta guía abarca las características de las asociaciones de Active Record. A partir de esta guía ud. podrá:
+Esta guÃ­a abarca las caracterÃ­sticas de las asociaciones de Active Record. A partir de esta guÃ­a ud. podrÃ¡:
 
 * Declarar asociaciones entre modelos Active Record
 * Comprender los diferentes tipos de asociaciones de Active Record
-* Usar los métodos agregados a sus modelos por la creación de las asociaciones
+* Usar los mÃ©todos agregados a sus modelos por la creaciÃ³n de las asociaciones
 
-== ¿Por qué Asociaciones ?
+== Â¿Por quÃ© Asociaciones ?
 
-¿Por qué necesitamos asociaciones entre los modelos? Porque hacen más simples y fáciles las operaciones comunes su código. Por ejemplo, considere una aplicación Rails que incluye un modelo para los clientes y un modelo para los pedidos. Cada cliente puede tener muchos pedidos. Sin las asociaciones, las declaraciones del modelo se verían así:
+Â¿Por quÃ© necesitamos asociaciones entre los modelos? Porque hacen mÃ¡s simples y fÃ¡ciles las operaciones comunes su cÃ³digo. Por ejemplo, considere una aplicaciÃ³n Rails que incluye un modelo para los clientes y un modelo para los pedidos. Cada cliente puede tener muchos pedidos. Sin las asociaciones, las declaraciones del modelo se verÃ­an asÃ­:
 
 [source, ruby]
 -------------------------------------------------------
@@ -20,14 +22,14 @@ class Order < ActiveRecord::Base
 end
 -------------------------------------------------------
 
-Ahora supongamos que queremos agregar un nuevo pedido para un cliente existente. Deberíamos tener que hacer algo como esto:
+Ahora supongamos que queremos agregar un nuevo pedido para un cliente existente. DeberÃ­amos tener que hacer algo como esto:
 
 [source, ruby]
 -------------------------------------------------------
 @order = Order.create(:order_date => Time.now, :customer_id => @customer.id)
 -------------------------------------------------------
 
-O considere eliminar un cliente, y asegurarse que todos sus pedidos sean eliminados también.
+O considere eliminar un cliente, y asegurarse que todos sus pedidos sean eliminados tambiÃ©n.
 
 [source, ruby]
 -------------------------------------------------------
@@ -38,7 +40,7 @@ end
 @customer.destroy
 -------------------------------------------------------
 
-Con las asociaciones de Active Record, podemos hacer esto - y otras - cosas más fácil declarativamente diciéndole a Rails que hay una conexión entre los dos modelos. Este es el código con asociaciones para los clientes y los pedidos.
+Con las asociaciones de Active Record, podemos hacer esto - y otras - cosas mÃ¡s fÃ¡cil declarativamente diciÃ©ndole a Rails que hay una conexiÃ³n entre los dos modelos. Este es el cÃ³digo con asociaciones para los clientes y los pedidos.
 
 [source, ruby]
 -------------------------------------------------------
@@ -51,11 +53,13 @@ class Order < ActiveRecord::Base
 end
 -------------------------------------------------------
 
-Con este cambio, crear un nuevo pedido para un cliente es más fácil:
+Con este cambio, crear un nuevo pedido para un cliente es mÃ¡s fÃ¡cil:
 
 [source, ruby]
 -------------------------------------------------------
 @order = @customer.orders.create(:order_date => Time.now)
 -------------------------------------------------------
+
+
 
 
