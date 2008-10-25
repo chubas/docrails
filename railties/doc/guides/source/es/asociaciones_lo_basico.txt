@@ -71,6 +71,26 @@ Para aprender más acerca de los diferentes tipos de asociaciones, lea la siguie
 
 == Los tipos de las asociaciones
 
-En Rails, una _asociación_ es una conexión entre dos modelos Active Record. Las asociaciones están implementadas usando llamadas de macro-estilo, entonces ud. puede agregar características declarativamente a sus modelos. Por ejemplo, declarando que un modelo +pertenece a+ (n.t. belongs_to) otro
+En Rails, una _asociación_ es una conexión entre dos modelos Active Record. Las asociaciones están implementadas usando llamadas de macro-estilo, entonces ud. puede agregar características declarativamente a sus modelos. Por ejemplo, declarando que un modelo +pertenece a+ (n. del t. belongs_to) otro, ud. le ordena a Rails que mantenga la información Clave Primaria-Clave Foránea entre las instancias de los dos modelos, y obtendrá un número de métodos de utilidad agregados a su modelo. Rails soporta seis tipos de asociaciones:
+
+* +belongs_to+
+* +has_one+
+* +has_many+
+* +has_many :through+
+* +has_one :through+
+* +has_and_belongs_to_many+
+
+En el resto de esta guía, ud. aprenderá como declarar y usar las diferentes formas de asociaciones. Pero primero, una introducción rápida a las situaciones dónde es apropiado cada tipo de asociacion.
+
+=== La asociación +belongs_to+ (n. del t. Pertenece a)
+
+La asociación +belongs_to+ establece una conexión uno-a-uno con otro modelo, tal que cada instancia del modelo dónde se hace la declaración "pertence a" una instancia del otro modelo. Por ejmplo, si su aplicación incluye clientes y pedidos, y cada pedido es asignado a exactamente un cliente, bería declarar el modelo de pedido así:
+
+[source, ruby]
+-------------------------------------------------------
+class Order < ActiveRecord::Base
+  belongs_to :customer
+end
+-------------------------------------------------------
 
 
