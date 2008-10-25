@@ -13,10 +13,10 @@ Esta guía abarca las características de las asociaciones de Active Record. A par
 
 [source, ruby]
 -------------------------------------------------------
-class Cliente < ActiveRecord::Base
+class Customer < ActiveRecord::Base
 end
 
-class Pedido < ActiveRecord::Base
+class Order < ActiveRecord::Base
 end
 -------------------------------------------------------
 
@@ -24,8 +24,38 @@ Ahora supongamos que queremos agregar un nuevo pedido para un cliente existente.
 
 [source, ruby]
 -------------------------------------------------------
-@pedido = Pedido.create(:order_date => Time.now, :customer_id => @customer.id)
+@order = Order.create(:order_date => Time.now, :customer_id => @customer.id)
 -------------------------------------------------------
 
+O considere eliminar un cliente, y asegurarse que todos sus pedidos sean eliminados también.
+
+[source, ruby]
+-------------------------------------------------------
+@orders = Order.find_by_customer_id(@customer.id)
+@orders.each do |order|
+  order.destroy
+end
+@customer.destroy
+-------------------------------------------------------
+
+Con las asociaciones de Active Record, podemos hacer esto - y otras - cosas más fácil declarativamente diciéndole a Rails que hay una conexión entre los dos modelos. Este es el código con asociaciones para los clientes y los pedidos.
+
+[source, ruby]
+-------------------------------------------------------
+class Customer < ActiveRecord::Base
+  has_many :orders
+end
+
+class Order < ActiveRecord::Base
+  belongs_to :customer
+end
+-------------------------------------------------------
+
+Con este cambio, crear un nuevo pedido para un cliente es más fácil:
+
+[source, ruby]
+-------------------------------------------------------
+@order = @customer.orders.create(:order_date => Time.now)
+-------------------------------------------------------
 
 
