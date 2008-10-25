@@ -93,4 +93,18 @@ class Order < ActiveRecord::Base
 end
 -------------------------------------------------------
 
+image:images/belongs_to.png[belongs_to Association Diagram]
+
+=== La asociación +has_one+ (n. del .t Tiene un)
+
+La asociación +has_one+ también establece una conexión uno-a-uno con otro modelo, pero con semánticas (y consecuencias) un tanto diferentes. Esta asociación indica que cada instancia de un modelo contiene o posee una instancia de otro modelo. Por ejemplo, si cada proveedor en su aplicación tiene un cuenta, debería declarar el modelo de proveedor así
+
+[source, ruby]
+-------------------------------------------------------
+class Supplier < ActiveRecord::Base
+  has_one :account
+end
+-------------------------------------------------------
+
+image:images/has_one.png[has_one Association Diagram]
 
