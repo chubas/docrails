@@ -249,3 +249,42 @@ end
 -------------------------------------------------------
 
 NOTA: El uso de +t.integer :supplier_id+ crea la clave foránea de una forma obvia e implícita. En las versiones actuales de Rails, ud. puede en cambio abstraerse de este detalle de implementación mediante el uso de +t.references :supplier+
+
+=== Eligiendo entre +has_many :through+ y +has_and_belongs_to_many+
+
+Rails ofrece dos formas diferentes para declarar una relación de muchos-a-muchos entre dos modelos. La forma simple es usar +has_and_belongs_to_many+, la cual le permite hacer la asociación directamente:
+
+[source, ruby]
+-------------------------------------------------------
+class Assembly < ActiveRecord::Base
+  has_and_belongs_to_many :parts
+end
+
+class Part < ActiveRecord::Base
+  has_and_belongs_to_many :assemblies
+end
+-------------------------------------------------------
+
+La segunda opción para declarar una relación de muchos-a-muchos es usar +has_many :through+. Esto hace la asociación indirectamente, através de un modelo de unión:
+
+[source, ruby]
+-------------------------------------------------------
+class Assembly < ActiveRecord::Base
+  has_many :manifests
+  has_many :parts, :through => :manifests
+end
+
+class Manifest < ActiveRecord::Base
+  belongs_to :assembly
+  belongs_to :part
+end
+
+class Part < ActiveRecord::Base
+  has_many :manifests
+  has_many :assemblies, :through => :manifests
+end
+-------------------------------------------------------
+
+La regla general más simple es que debería establecer una relación +has_many :through+ si necesita trabajar como una entidad independiente con el modelo de la relación. Si no necesita hacer nada con el modelo de la relación, quizás se más simple establecer una relación +has_and_belongs_to_many+ (aunque va a necesitar recordar crear la tabla de unión).
+
+Debería usar +has_many :through+ si va a necesitar validaciones, callbacks, o atributos extras en el modelo de unión.
