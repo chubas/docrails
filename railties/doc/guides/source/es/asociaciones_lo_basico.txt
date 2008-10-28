@@ -188,3 +188,24 @@ end
 -------------------------------------------------------
 
 image:images/has_one_through.png[has_one :through Association Diagram]
+
+=== La Asociación +has_and_belongs_to_many+
+
+Una asociación +has_and_belongs_to_many+ crea una conexión directa de muchos-a-muchos con otro modelo, sin otro modelo interviniente. Por ejemplo, si su aplicación include montajes y partes, con cada montaje que tiene muchas partes y cada parte aparece en varios montajes, ud. podría delcarar los modelos así:
+
+[source, ruby]
+-------------------------------------------------------
+class Assembly < ActiveRecord::Base
+  has_and_belongs_to_many :parts
+end
+
+class Part < ActiveRecord::Base
+  has_and_belongs_to_many :assemblies
+end
+-------------------------------------------------------
+
+image:images/habtm.png[has_and_belongs_to_many Association Diagram]
+
+=== Eligiendo entre +belongs_to+ y +has_one+
+
+
