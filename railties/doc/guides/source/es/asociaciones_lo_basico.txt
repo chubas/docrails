@@ -123,7 +123,7 @@ NOTA: El nombre del otro modelo se pluraliza cuando declaramos una asociación +
 
 image:images/has_many.png[has_many Association Diagram]
 
-=== La asociación +has_many :through+ (n. del t. tiene muchos a traves)
+=== La asociación +has_many :through+ (n. del t. tiene muchos a traves de)
 
 Una asociación +has_many :through+ se usada frecuentemente para establecer una coexión de muchos-amuchos con otro modelo. Esta asociación indica que un el modelo dónde se hace la declaración puede coincidir con cero o más instancias del otro modelo _a traves_ de un tercer modelo. Por ejemplo, considere una práctica médica dónde los pacientes tienen turnos para ver al médico. La asociación relevante podría ser así:
 
@@ -147,4 +147,23 @@ end
 
 image:images/has_many_through.png[has_many :through Association Diagram]
 
+La asociación +has_many :through+ es también muy útil para hacer "atajos" através de asociaciones :+has_many+ anidadas. Por ejemplo, si un documento tiene muchas secciones, y una sección tiene muchos párrafos, ud. quizás desee obtener una colección simple de todos los párrafos en el documento. Podría realizar eso de esta forma:
 
+[source, ruby]
+-------------------------------------------------------
+class Document < ActiveRecord::Base
+  has_many :sections
+  has_many :paragraphs, :through => :sections
+end
+
+class Section < ActiveRecord::Base
+  belongs_to :document
+  has_many :paragraphs
+end
+
+class Paragraph < ActiveRecord::Base
+  belongs_to :section
+end
+-------------------------------------------------------
+
+=== La Asociación +has_one :through+
