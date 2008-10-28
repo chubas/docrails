@@ -167,3 +167,24 @@ end
 -------------------------------------------------------
 
 === La Asociación +has_one :through+
+
+Una asociación +has_one :through+ establece una conexión uno a uno con otro modelo. Esta asociación indica que el modelo dónde se hace la declaración puede coincidir con una instancia de otro modelo procediendo _através_ (n. del t. through) de un tercer modelo. Por ejemplo, si cada proveedor tiene una cuenta, y cada cuenta está asociada con un histórico de cuenta, entonces el modelo cliente podría ser así:
+
+[source, ruby]
+-------------------------------------------------------
+class Supplier < ActiveRecord::Base
+  has_one :account
+  has_one :account_history, :through => :account
+end
+
+class Account < ActiveRecord::Base
+  belongs_to :supplier
+  has_one :account_history
+end
+
+class AccountHistory < ActiveRecord::Base
+  belongs_to :account
+end
+-------------------------------------------------------
+
+image:images/has_one_through.png[has_one :through Association Diagram]
