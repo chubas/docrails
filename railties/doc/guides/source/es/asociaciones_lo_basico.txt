@@ -208,4 +208,44 @@ image:images/habtm.png[has_and_belongs_to_many Association Diagram]
 
 === Eligiendo entre +belongs_to+ y +has_one+
 
+Si ud. tienen hacer una relación 1-1 entre dos modelos, va a necesitar agregar +belongs_to+ a uno, y +has_one+ al otro modelo. ¿Cómo sabe cual es cual?
 
+El diferencia está en dónde va a poner la clave foránea (esta va en la tabla de la clase dónde declaró la asociación +belongs_to+), pero el significado de los datos debería darle una idea al respecto también. La relación +has_one+ dice que uno de algo es suyo - esto es, que algo apunta hacia aquí.Por ejemplo, tiene más sentido más sentido decir que un proveedor posee una cuenta más que decir que una cuenta posee un proveedor. Esto sugiere que las relaciones correctas son así:
+
+[source, ruby]
+-------------------------------------------------------
+class Supplier < ActiveRecord::Base
+  has_one :account
+end
+
+class Account < ActiveRecord::Base
+  belongs_to :supplier
+end
+-------------------------------------------------------
+
+The corresponding migration might look like this:
+
+[source, ruby]
+-------------------------------------------------------
+class CreateSuppliers < ActiveRecord::Migration
+  def self.up
+    create_table :suppliers do |t|
+      t.string  :name
+      t.timestamps
+    end
+
+    create_table :accounts do |t|
+      t.integer :supplier_id
+      t.string  :account_number
+      t.timestamps
+    end
+  end
+
+  def self.down
+    drop_table :accounts
+    drop_table :suppliers
+  end
+end
+-------------------------------------------------------
+
+NOTA: El uso de +t.integer :supplier_id+ crea la clave foránea de una forma obvia e implícita. En las versiones actuales de Rails, ud. puede en cambio abstraerse de este detalle de implementación mediante el uso de +t.references :supplier+
