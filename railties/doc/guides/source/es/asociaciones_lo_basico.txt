@@ -351,7 +351,7 @@ image:images/polymorphic.png[Polymorphic Association Diagram]
 
 === Unión a sí mismo
 
-En un diseño de modelo de datos, a veces encontrará un modelo que debe tener una relación a sí mismo. Por ejemplo, quizás quiera almacenar todos los empleados en modelo simple de base de datos, pero que se capáz de seguir el rastro realciones tales como gerente y sus subordinados. Esta situación puede ser modelada con una asociación de unión-a-sí-mismo:
+En un diseño de modelo de datos, a veces encontrará un modelo que debe tener una relación a sí mismo. Por ejemplo, quizás quiera almacenar todos los empleados en un modelo simple de base de datos, pero que se capáz de seguir el rastro realciones tales como gerente y sus subordinados. Esta situación puede ser modelada con una asociación de unión-a-sí-mismo:
 
 [source, ruby]
 -------------------------------------------------------
@@ -362,3 +362,32 @@ end
 -------------------------------------------------------
 
 Con esta configuración, ud. pude obtener +@employee.subordinates+ y +@employee.managers+.
+
+=== Consejos, Trucos, y Advertencias
+
+Aquí hay algunas cosas que debería saber para hacer un uso eficiente de las asociaciones de Active Record en sus aplicaciones Rails:
+
+* Control de caching
+* Evitar las colisiones de nombres
+* Actualizar el esquema
+* Control del ámbito de la asociación
+
+=== Control de cache
+
+Todos los métodos de asociaciones están construidos en base al cache que mantiene el resultado de la mayoría de las consultas disponibles para todas las operaciones. El cache sin embargo es compartido entre los métodos. Por ejemplo:
+
+[source, ruby]
+-------------------------------------------------------
+customer.orders                 # retrieves orders from the database
+customer.orders.size            # uses the cached copy of orders
+customer.orders.empty?          # uses the cached copy of orders
+-------------------------------------------------------
+
+¿Pero que pasa si quiere recargar el cache, por que los datos quizás han sido cambiados por alguna otra parte de la aplicación?  Sólo llame a la asociación con +true+:
+
+[source, ruby]
+-------------------------------------------------------
+customer.orders                 # retrieves orders from the database
+customer.orders.size            # uses the cached copy of orders
+customer.orders(true).empty?    # discards the cached copy of orders and goes back to the database
+-------------------------------------------------------
