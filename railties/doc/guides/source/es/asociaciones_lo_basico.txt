@@ -348,3 +348,17 @@ end
 -------------------------------------------------------
 
 image:images/polymorphic.png[Polymorphic Association Diagram]
+
+=== Unión a sí mismo
+
+En un diseño de modelo de datos, a veces encontrará un modelo que debe tener una relación a sí mismo. Por ejemplo, quizás quiera almacenar todos los empleados en modelo simple de base de datos, pero que se capáz de seguir el rastro realciones tales como gerente y sus subordinados. Esta situación puede ser modelada con una asociación de unión-a-sí-mismo:
+
+[source, ruby]
+-------------------------------------------------------
+class Employee < ActiveRecord::Base
+  has_many :subordinates, :class_name => "User", :foreign_key => "manager_id"
+  belongs_to :manager, :class_name => "User"
+end
+-------------------------------------------------------
+
+Con esta configuración, ud. pude obtener +@employee.subordinates+ y +@employee.managers+.
