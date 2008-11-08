@@ -168,7 +168,7 @@ end
 
 === La Asociación +has_one :through+
 
-Una asociación +has_one :through+ establece una conexión uno a uno con otro modelo. Esta asociación indica que el modelo dónde se hace la declaración puede coincidir con una instancia de otro modelo procediendo _através_ (n. del t. through) de un tercer modelo. Por ejemplo, si cada proveedor tiene una cuenta, y cada cuenta está asociada con un histórico de cuenta, entonces el modelo cliente podría ser así:
+Una asociación +has_one :through+ establece una conexión uno a uno con otro modelo. Esta asociación indica que el modelo dónde se hace la declaración puede coincidir con una instancia de otro modelo procediendo _através_ (n. del t. through) de un tercer modelo. Por ejemplo, si cada proveedor tiene una cuenta, y cada cuenta está asociada con un histórico de cuenta, entonces el modelo proveedor podría ser así:
 
 [source, ruby]
 -------------------------------------------------------
@@ -210,7 +210,7 @@ image:images/habtm.png[has_and_belongs_to_many Association Diagram]
 
 Si ud. tienen hacer una relación 1-1 entre dos modelos, va a necesitar agregar +belongs_to+ a uno, y +has_one+ al otro modelo. ¿Cómo sabe cual es cual?
 
-El diferencia está en dónde va a poner la clave foránea (esta va en la tabla de la clase dónde declaró la asociación +belongs_to+), pero el significado de los datos debería darle una idea al respecto también. La relación +has_one+ dice que uno de algo es suyo - esto es, que algo apunta hacia aquí.Por ejemplo, tiene más sentido más sentido decir que un proveedor posee una cuenta más que decir que una cuenta posee un proveedor. Esto sugiere que las relaciones correctas son así:
+El diferencia está en dónde va a poner la clave foránea (esta va en la tabla de la clase dónde declaró la asociación +belongs_to+), pero el significado de los datos debería darle una idea al respecto también. La relación +has_one+ dice que uno de algo es suyo - esto es, que algo apunta hacia aquí. Por ejemplo, tiene más sentido decir que un proveedor posee una cuenta más que decir que una cuenta posee un proveedor. Esto sugiere que las relaciones correctas son así:
 
 [source, ruby]
 -------------------------------------------------------
@@ -288,3 +288,63 @@ end
 La regla general más simple es que debería establecer una relación +has_many :through+ si necesita trabajar como una entidad independiente con el modelo de la relación. Si no necesita hacer nada con el modelo de la relación, quizás se más simple establecer una relación +has_and_belongs_to_many+ (aunque va a necesitar recordar crear la tabla de unión).
 
 Debería usar +has_many :through+ si va a necesitar validaciones, callbacks, o atributos extras en el modelo de unión.
+
+=== Asociaciones polimórficas
+
+Un vuelta de rosca un poco más avanzada en las asociaciones es la _asociación polimórfica_. Con las asociaciones polimórficas, un modelo puede pertenecer (n. del t. belongs to) a más de un modelo, o asociación simple. Por ejemplo, quizás tenga un modelo "picture" que pertenece tanto a los modelos "employee" como a "product". Aquí está como podría ser declarado:
+
+[source, ruby]
+-------------------------------------------------------
+class Picture < ActiveRecord::Base
+  belongs_to :imageable, :polymorphic => true
+end
+
+class Employee < ActiveRecord::Base
+  has_many :pictures, :as => :imageable
+end
+
+class Product < ActiveRecord::Base
+  has_many :pictures, :as => :imageable
+end
+-------------------------------------------------------
+
+Podría pensar una declaración polimórfica +belongs_to+ como una interface que cualquier otro modelo puede usar. Desde una instancia del modelo +Employee+, puede recuperar una colección de pictures: +@employee.pictures+. De forma similar, puede obtener +@product.pictures+. SI tiene una instancia del modelo +Picture+, puede obtener su padre via  +@picture.imageable+. Para hacer funcionar esto, necesita declarar una columna de clave foránea  y una columna de tipo en el modelo que declara la interface porlimórfica:
+
+[source, ruby]
+-------------------------------------------------------
+class CreatePictures < ActiveRecord::Migration
+  def self.up
+    create_table :pictures do |t|
+      t.string  :name
+      t.integer :imageable_id
+      t.string  :imageable_type
+      t.timestamps
+    end
+  end
+
+  def self.down
+    drop_table :pictures
+  end
+end
+-------------------------------------------------------
+
+Esta migración se podría simplificar usando +t.references+:
+
+[source, ruby]
+-------------------------------------------------------
+class CreatePictures < ActiveRecord::Migration
+  def self.up
+    create_table :pictures do |t|
+      t.string  :name
+      t.references :imageable, :polymorphic => true
+      t.timestamps
+    end
+  end
+
+  def self.down
+    drop_table :pictures
+  end
+end
+-------------------------------------------------------
+
+image:images/polymorphic.png[Polymorphic Association Diagram]
