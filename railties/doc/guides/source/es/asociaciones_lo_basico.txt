@@ -374,7 +374,7 @@ Aquí hay algunas cosas que debería saber para hacer un uso eficiente de las as
 
 === Control de cache
 
-Todos los métodos de asociaciones están construidos en base al cache que mantiene el resultado de la mayoría de las consultas disponibles para todas las operaciones. El cache sin embargo es compartido entre los métodos. Por ejemplo:
+Todos los métodos de asociaciones están construidos en base al cache que mantiene el resultado de la mayoría de las consultas disponibles para otras operaciones. El cache sin embargo es compartido entre los métodos. Por ejemplo:
 
 [source, ruby]
 -------------------------------------------------------
@@ -391,3 +391,9 @@ customer.orders                 # retrieves orders from the database
 customer.orders.size            # uses the cached copy of orders
 customer.orders(true).empty?    # discards the cached copy of orders and goes back to the database
 -------------------------------------------------------
+
+=== Evitando las colisiones de nombres
+
+Ud. no es libre de elegir cualquier nombre para sus asociaciones. Por que la creación de una asociación agrega un método con el nombre del modelo, es una mala idea darle a una asociación un nombre que ya es usado para un método de instancia de +ActiveRecord::Base+. El método de la asociación sobreescribiría  el método base y rompería las cosas. Por ejemplo, +attributes+ o +connection+ son malos candidatos para nombres de asociaciones.
+
+
