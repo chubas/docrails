@@ -396,4 +396,69 @@ customer.orders(true).empty?    # discards the cached copy of orders and goes ba
 
 Ud. no es libre de elegir cualquier nombre para sus asociaciones. Por que la creación de una asociación agrega un método con el nombre del modelo, es una mala idea darle a una asociación un nombre que ya es usado para un método de instancia de +ActiveRecord::Base+. El método de la asociación sobreescribiría  el método base y rompería las cosas. Por ejemplo, +attributes+ o +connection+ son malos candidatos para nombres de asociaciones.
 
+=== Actualizando el Esquema
 
+Las asociaciones son extramadamente útiles, pero no son mágicas. Ud. es el responsable de mantener el esquema de la base de datos para que coincida con sus asociaciones. En la práctica esto quiere decir dos cosas. Primero, necesita crear las foráneas correspondientes:
+
+[source, ruby]
+-------------------------------------------------------
+class Order < ActiveRecord::Base
+  belongs_to :customer
+end
+-------------------------------------------------------
+
+Esta declaración necesita ser respaldada por la propia declaración de la clave foránear en la tabla orders:
+
+[source, ruby]
+-------------------------------------------------------
+class CreateOrders < ActiveRecord::Migration
+  def self.up
+    create_table :orders do |t|
+      t.order_date   :datetime
+      t.order_number :string
+      t.customer_id  :integer
+    end
+  end
+
+  def self.down
+    drop_table :orders
+  end
+end
+-------------------------------------------------------
+
+Si ud. crea una asocicación un tiempo después de construir el modelo, necesita recordar crear una migración +add_column+ para porveer la clave foránea necesitada.
+
+Segundo, si crea una asocicación +has_and_belongs_to_many+, necesita crear explicitamente la tabal de unión. A menos que la tabla de unión esté explícitamente especificada mediante el uso de la opción +:join_table+, Active Record crea el nombre mediante el uso del orden léxico de los nombres de las clases. Entonces una unión entre los modelos customer y order va a dar como resultado el nombre de tabla por defecto "customers_orders" porque "c" precede a la "o" en el orden léxico.
+
+ADVERTENCIA: La precedencia entre los nombres de los modelos es calculada usando el operador +<+ para +String+. Esto quiere decir que si los strings tienen diferentes longitudes, y los strings son iguales cuando se comparan por su longitud más corta, el string más largo se considera con un grado de precedencia más alto que el más corto. Por ejemplo, se podría esperar que las tablas "paper_boxes" y "papers" generen un nombre de tabla de unión "papers_paper_boxes" por la longitud del nombre  "paper_boxes", pero de hecho genera un nombre de tabla de unión  "paper_boxes_papers".
+
+Cualquiera sea el nombre, debe generar manualmente la tabla de unión con una migración apropiada. Por ejemplo, considere estas asociaciones:
+
+[source, ruby]
+-------------------------------------------------------
+class Assembly < ActiveRecord::Base
+  has_and_belongs_to_many :parts
+end
+
+class Part < ActiveRecord::Base
+  has_and_belongs_to_many :assemblies
+end
+-------------------------------------------------------
+
+Necesita respaldarse con una migración para crear la tabla +assemblies_parts+. Esta tabla debe crearse sin una clave primaria.
+
+[source, ruby]
+-------------------------------------------------------
+class CreateAssemblyPartJoinTable < ActiveRecord::Migration
+  def self.up
+    create_table :assemblies_parts, :id => false do |t|
+      t.integer :assembly_id
+      t.integer :part_id
+    end
+  end
+
+  def self.down
+    drop_table :assemblies_parts
+  end
+end
+-------------------------------------------------------
