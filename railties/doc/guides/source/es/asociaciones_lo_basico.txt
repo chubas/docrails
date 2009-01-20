@@ -568,3 +568,12 @@ El método  +_association_+ retorna el objeto asociado, si es que existe alguno.
 -------------------------------------------------------
 
 Si el objeto asociado ha sido obtenido desde la base de datos por este objeto, al versión cacheada será retornada. Para sobreescribir este comportamiento (y forzar la lectura desde la base de datos), pase +true+ como argumento de +force_reload+.
+
+===== +_association_=(associate)+
+
+El método +_association_=+ asgina a este objeto un objeto asociado. Detrás de escena, esto significa sacar la clave primaria del objeto asociado y poner este valor en la clave foránea de este objeto.
+
+[source, ruby]
+-------------------------------------------------------
+@order.customer = @customer
+-------------------------------------------------------
