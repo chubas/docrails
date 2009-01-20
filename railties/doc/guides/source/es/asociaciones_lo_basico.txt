@@ -527,3 +527,44 @@ Las secciones siguientes dan los detalles de cada tipo de asociación, incluyend
 ==== La asociación +belongs_to+
 
 La asociación +belongs_to+ crea una coincidencia uno-a-uno con otro modelo. En términos de la base de datos, esta asociación dice que la clase contiene una clave foránea. Si la otra clase contiene la clave foránea, entonces en cambio debería usar +has_one+.
+
+==== Métodos agregados por +belongs_to+
+
+Cuando declara una asociación +belongs_to+, la clase declarante automáticamente adquiere 5 métodos relacionados con la asociación.
+
+* +_association_(force_reload = false)+
+* +_association_=(associate)+
+* +_association_.nil?+
+* +build___association__(attributes = {})+
+* +create___association__(attributes = {})+
+
+En todos estos métodos, +_association_+ es reemplazado con el símbolo pasado como primer argumento a +belongs_to+. Por ejemplo, dada la declaración:
+
+[source, ruby]
+-------------------------------------------------------
+class Order < ActiveRecord::Base
+  belongs_to :customer
+end
+-------------------------------------------------------
+
+Cada instancia del modelo order va a tener estos métodos:
+
+[source, ruby]
+-------------------------------------------------------
+customer
+customer=
+customer.nil?
+build_customer
+create_customer
+-------------------------------------------------------
+
+=====  +_association_(force_reload = false)+
+
+El método  +_association_+ retorna el objeto asociado, si es que existe alguno. Si no se encuentra el objeto asociado, retorna +nil+.
+
+[source, ruby]
+-------------------------------------------------------
+@customer = @order.customer
+-------------------------------------------------------
+
+Si el objeto asociado ha sido obtenido desde la base de datos por este objeto, al versión cacheada será retornada. Para sobreescribir este comportamiento (y forzar la lectura desde la base de datos), pase +true+ como argumento de +force_reload+.
