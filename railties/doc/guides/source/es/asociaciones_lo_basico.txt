@@ -521,3 +521,9 @@ end
 -------------------------------------------------------
 
 == Referencia detallada de asociaciones
+
+Las secciones siguientes dan los detalles de cada tipo de asociación, incluyendo los métodos que agregan y las opciones que puede usar cuando declara una asociación.
+
+==== La asociación +belongs_to+
+
+La asociación +belongs_to+ crea una coincidencia uno-a-uno con otro modelo. En términos de la base de datos, esta asociación dice que la clase contiene una clave foránea. Si la otra clase contiene la clave foránea, entonces en cambio debería usar +has_one+.
