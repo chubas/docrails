@@ -84,7 +84,7 @@ En el resto de esta guía, ud. aprenderá como declarar y usar las diferentes fo
 
 === La asociación +belongs_to+ (n. del t. Pertenece a)
 
-La asociación +belongs_to+ establece una conexión uno-a-uno con otro modelo, tal que cada instancia del modelo dónde se hace la declaración "pertence a" una instancia del otro modelo. Por ejmplo, si su aplicación incluye clientes y pedidos, y cada pedido es asignado a exactamente un cliente, bería declarar el modelo de pedido así:
+La asociación +belongs_to+ establece una conexión uno-a-uno con otro modelo, tal que cada instancia del modelo dónde se hace la declaración "pertence a" una instancia del otro modelo. Por ejmplo, si su aplicación incluye clientes y pedidos, y cada pedido es asignado a exactamente un cliente, debería declarar el modelo de pedido así:
 
 [source, ruby]
 -------------------------------------------------------
@@ -97,7 +97,7 @@ image:images/belongs_to.png[belongs_to Association Diagram]
 
 === La asociación +has_one+ (n. del .t Tiene un)
 
-La asociación +has_one+ también establece una conexión uno-a-uno con otro modelo, pero con semánticas (y consecuencias) un tanto diferentes. Esta asociación indica que cada instancia de un modelo contiene o posee una instancia de otro modelo. Por ejemplo, si cada proveedor en su aplicación tiene un cuenta, debería declarar el modelo de proveedor así
+La asociación +has_one+ también establece una conexión uno-a-uno con otro modelo, pero con semánticas (y consecuencias) un tanto diferentes. Esta asociación indica que cada instancia de un modelo contiene o posee una instancia de otro modelo. Por ejemplo, si cada proveedor en su aplicación tiene una cuenta, debería declarar el modelo de proveedor así
 
 [source, ruby]
 -------------------------------------------------------
@@ -210,7 +210,7 @@ image:images/habtm.png[has_and_belongs_to_many Association Diagram]
 
 Si ud. tienen hacer una relación 1-1 entre dos modelos, va a necesitar agregar +belongs_to+ a uno, y +has_one+ al otro modelo. ¿Cómo sabe cual es cual?
 
-El diferencia está en dónde va a poner la clave foránea (esta va en la tabla de la clase dónde declaró la asociación +belongs_to+), pero el significado de los datos debería darle una idea al respecto también. La relación +has_one+ dice que uno de algo es suyo - esto es, que algo apunta hacia aquí. Por ejemplo, tiene más sentido decir que un proveedor posee una cuenta más que decir que una cuenta posee un proveedor. Esto sugiere que las relaciones correctas son así:
+La diferencia está en dónde va a poner la clave foránea (esta va en la tabla de la clase dónde declaró la asociación +belongs_to+), pero el significado de los datos debería darle una idea al respecto también. La relación +has_one+ dice que uno de algo es suyo - esto es, que algo apunta hacia aquí. Por ejemplo, tiene más sentido decir que un proveedor posee una cuenta más que decir que una cuenta posee un proveedor. Esto sugiere que las relaciones correctas son así:
 
 [source, ruby]
 -------------------------------------------------------
@@ -308,7 +308,7 @@ class Product < ActiveRecord::Base
 end
 -------------------------------------------------------
 
-Podría pensar una declaración polimórfica +belongs_to+ como una interface que cualquier otro modelo puede usar. Desde una instancia del modelo +Employee+, puede recuperar una colección de pictures: +@employee.pictures+. De forma similar, puede obtener +@product.pictures+. SI tiene una instancia del modelo +Picture+, puede obtener su padre via  +@picture.imageable+. Para hacer funcionar esto, necesita declarar una columna de clave foránea  y una columna de tipo en el modelo que declara la interface porlimórfica:
+Podría pensar una declaración polimórfica +belongs_to+ como una interface que cualquier otro modelo puede usar. Desde una instancia del modelo +Employee+, puede recuperar una colección de pictures: +@employee.pictures+. De forma similar, puede obtener +@product.pictures+. Si tiene una instancia del modelo +Picture+, puede obtener su padre via  +@picture.imageable+. Para hacer funcionar esto, necesita declarar una columna de clave foránea  y una columna de tipo en el modelo que declara la interface porlimórfica:
 
 [source, ruby]
 -------------------------------------------------------
@@ -462,3 +462,62 @@ class CreateAssemblyPartJoinTable < ActiveRecord::Migration
   end
 end
 -------------------------------------------------------
+
+=== Controlando el ámbito de la asociación
+
+Por defecto, las asociaciones sólamente miran los objetos dentro del ámbito del modulo actual. Esto puede ser importante cuando declare Modelos Active Record dentro de un modulo. Por ejemplo:
+
+[source, ruby]
+-------------------------------------------------------
+module MyApplication
+  module Business
+    class Supplier < ActiveRecord::Base
+       has_one :account
+    end
+
+    class Account < ActiveRecord::Base
+       belongs_to :supplier
+    end
+  end
+end
+-------------------------------------------------------
+
+Esto va a funcionar bien, porque ambos +Supplier+ y +Account+ están definidos dentro del mismo ámbito. Pero lo que sigue no va a funcionar porque +Supplier+ y +Account+ están definidos en diferentes ámbitos:
+
+[source, ruby]
+-------------------------------------------------------
+module MyApplication
+  module Business
+    class Supplier < ActiveRecord::Base
+       has_one :account
+    end
+  end
+
+  module Billing
+    class Account < ActiveRecord::Base
+       belongs_to :supplier
+    end
+  end
+end
+-------------------------------------------------------
+
+Para asociar un modelo en un ámbito diferente, debe espicificar el nombre completo de la clase en la declaración de su asociación:
+
+[source, ruby]
+-------------------------------------------------------
+module MyApplication
+  module Business
+    class Supplier < ActiveRecord::Base
+       has_one :account, :class_name => "MyApplication::Billing::Account"
+    end
+  end
+
+  module Billing
+    class Account < ActiveRecord::Base
+       belongs_to :supplier, :class_name => "MyApplication::Business::Supplier"
+    end
+  end
+end
+-------------------------------------------------------
+
+== Referencia detallada de asociaciones
