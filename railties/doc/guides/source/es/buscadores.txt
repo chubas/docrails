@@ -8,53 +8,42 @@ Esta guía trata sobre el método `find` definido en ActiveRecord::Base, buscand
 En un principio había SQL. El SQL se veía como esto:
 
 [source,sql]
-SELECT * FROM clientes
-SELECT * FROM clientes WHERE id = '1'
-SELECT * FROM clientes LIMIT 0,1
-SELECT * FROM clientes ORDER BY id DESC LIMIT 0,1
+SELECT * FROM clients
+SELECT * FROM clients WHERE id = '1'
+SELECT * FROM clients LIMIT 0,1
+SELECT * FROM clients ORDER BY id DESC LIMIT 0,1
 
-En Rails, normalmente no escribes SQL (a diferencia de otros lenguajes) porque ActiveRecord está ahí para ayudarte a encontrar tus registros.
+En Rails, normalmente no necesitas escribir SQL (a diferencia de otros lenguajes) porque ActiveRecord está ahí para ayudarte a encontrar tus registros.
 
 == Nuestros modelos
 
-Para esta guía, definiremos los siguientes modelos*:
-
-* Asumiremos que los plurales correctos en español están definidos en la clase Inflector de la siguiente manera:
-
-[source, ruby]
-Inflector.inflections do |i|
-  i.irregular 'orden', 'ordenes'
-  i.irregular 'direccion', 'direcciones'
-  i.irregular 'direccion_de_correo', 'direcciones_de_correo'
-  i.irregular 'rol', 'roles'
-end
-
+Para esta guía, definiremos los siguientes modelos:
 
 [source,ruby]
-class Cliente < ActiveRecord::Base
-  has_one :direccion
-  has_one :direccion_de_correo
-  has_many :ordenes
+class Client < ActiveRecord::Base
+  has_one :address
+  has_one :mailing_address
+  has_many :orders
   has_and_belongs_to_many :roles
 end  
 
 [source,ruby]
-class Direccion < ActiveRecord::Base
-  belongs_to :cliente
+class Address < ActiveRecord::Base
+  belongs_to :client
 end
 
 [source,ruby]
-class DireccionDeCorreo < Address
+class MailingAddress < Address
 end
 
 [source,ruby]
 class Order < ActiveRecord::Base
-  belongs_to :cliente, :counter_cache => true
+  belongs_to :client, :counter_cache => true
 end
 
 [source,ruby]
-class Rol < ActiveRecord::Base
-  has_and_belongs_to_many :clientes
+class Role < ActiveRecord::Base
+  has_and_belongs_to_many :clients
 end
 
 == Siendo agnóstico con la base de datos
@@ -63,35 +52,35 @@ ActiveRecord realizará las búsquedas en la base de datos por tí y es compatib
 
 == IDs, Primero, Último y Todos
 
-ActiveRecord::Base contiene métodos definidos en él para hacer la interacción con la base de datos y las tablas en ella mucho, mucho más fácil: el método `find`. Éste método te permite pasar argumentos para realizar ciertas búsquedas en tu base de datos sin necesidad de utilizar SQL. Por ejemplo, si quisieras encontrar el registro con el id de 1, deberás escribir `Cliente.find(1)`, que realizaría la siguiente búsqueda en tu base de datos:
+ActiveRecord::Base contiene métodos definidos en él para hacer la interacción con la base de datos y las tablas en ella mucho, mucho más fácil: el método `find`. Éste método te permite pasar argumentos para realizar ciertas búsquedas en tu base de datos sin necesidad de utilizar SQL. Por ejemplo, si quisieras encontrar el registro con el id de 1, deberás escribir `Client.find(1)`, que realizaría la siguiente búsqueda en tu base de datos:
 
 [source, sql]
-SELECT * FROM `clientes` WHERE (`clientes`.`id` = 1) 
+SELECT * FROM `clients` WHERE (`clients`.`id` = 1) 
 NOTA: Por favor, ten en cuenta que dado que esta tabla es una tabla estándar generada por Rails en las migraciones, la llave primaria está definida por default como 'id'. Si has especificado una llave primaria diferente en tus migraciones, ésta es la que Rails utilizará para realizar la búsqueda al llamar el método find, no la columna `id`.
 
-Si quieres encontrar los clientes con las llaves 1 o 2, llamarías el método `Cliente.find([1,2])` o `Cliente.find(1,2)`, lo cual es ejecutado como:
+Si quieres encontrar los clientes con las llaves 1 o 2, llamarías el método `Client.find([1,2])` o `Client.find(1,2)`, lo cual es ejecutado como:
 
 [source, sql]
-SELECT * FROM `clientes` WHERE (`clients`.`id` IN (1,2)) 
+SELECT * FROM `clients` WHERE (`clients`.`id` IN (1,2)) 
 [source,txt]
->> Cliente.find(1,2)
-=> [#<Cliente id: 1, nombre: => "Ryan", locked: false, ordenes_count: 2, created_at: "2008-09-28 15:38:50", updated_at: "2008-09-28 15:38:50">, #<Cliente id: 2, nombre: => "Michael", locked: false, ordenes_count: 3, created_at: "2008-09-28 13:12:40", updated_at: "2008-09-28 13:12:40">]
+>> Client.find(1,2)
+=> [#<Client id: 1, name: => "Ryan", locked: false, orders_count: 2, created_at: "2008-09-28 15:38:50", updated_at: "2008-09-28 15:38:50">, #<Client id: 2, name: => "Michael", locked: false, orders_count: 3, created_at: "2008-09-28 13:12:40", updated_at: "2008-09-28 13:12:40">]
 
-Nota que si pasas una lista de números el resultado será devuelto como una lista, no como un objeto de tipo Cliente.
+Nota que si pasas una lista de números el resultado será devuelto como una lista, no como un objeto de tipo Client.
 
-Si quisieras encontrar el primer cliente, simplemente escribirías `Cliente.find(:first)`, lo cual obtendría el primer registro de tipo Cliente en la base de datos.
+Si quisieras encontrar el primer cliente, simplemente escribirías `Client.find(:first)`, lo cual obtendría el primer registro de tipo Client en la base de datos.
 
 [source,txt]
->> Cliente.find(:first)
-=> #<Clientd id: 1, nombre: => "Ryan", locked: false, ordenes_count: 2, created_at: "2008-09-28 15:38:50", updated_at: "2008-09-28 15:38:50">
-Si estás corriendo el servidor vía script/server, verías el siguiente resultado:
+>> Client.find(:first)
+=> #<Client id: 1, name: => "Ryan", locked: false, orders_count: 2, created_at: "2008-09-28 15:38:50", updated_at: "2008-09-28 15:38:50">
+If you were running script/server you may see the following output:
 
 [source,sql]
-SELECT * FROM clientes LIMIT 1
+SELECT * FROM clients LIMIT 1
 
 Indicando la búsqueda que Rails ha hecho en tu base de datos.
 
-To find the last client you would simply type `Client.find(:last)` and that would find the last client created in your clients table:
+Para encontrar el último cliente simplemente escribe `Client.find(:last)` y encontrará el último cliente creado en la tabla de clientes.
 
 [source,txt]
 >> Client.find(:last)
@@ -100,44 +89,44 @@ To find the last client you would simply type `Client.find(:last)` and that woul
 [source,sql]
 SELECT * FROM clients ORDER BY clients.id DESC LIMIT 1
 
-To find all the clients you would simply type `Client.find(:all)` and that would find all the clients in your clients table:
+Para encontrar todos los clientes simplemente escribe `Client.find(:all)`, lo que encontrará todos los clientes en tu tabla.
 
 [source,txt]
 >> Client.find(:all)
 => [#<Client id: 1, name: => "Ryan", locked: false, orders_count: 2, created_at: "2008-09-28 15:38:50", updated_at: "2008-09-28 15:38:50">, #<Client id: 2, name: => "Michael", locked: false, orders_count: 3, created_at: "2008-09-28 13:12:40", updated_at: "2008-09-28 13:12:40">]
 
-Alternatively to calling Client.find(:first)/`Client.find(:last)`/`Client.find(:all)`, you could use the class method of `Client.first`/`Client.last`/`Client.all` instead. `Client.first`, `Client.last` and `Client.all` just call their longer counterparts.
+Alternativamente a la llamada Client.find(:first)/`Client.find(:last)`/`Client.find(:all)`, puedes utilizar en su lugar los métodos de clase `Client.first`/`Client.last`/`Client.all`. `Client.first`, `Client.last` y `Client.all` sólo llaman las opciones más largas.
 
-Be aware that `Client.first`/`Client.find(:first)` and `Client.last`/`Client.find(:last)` will both return a single object, where as `Client.all`/`Client.find(:all)` will return an array of Client objects, just as passing in an array of ids to find will do also.
+Ten en cuenta que `Client.first`/`Client.find(:first)` y `Client.last`/`Client.find(:last)` regresarán un sólo objecto, mientras que `Client.all`/`Client.find(:all)` regresarán un arreglo con objectos tipo Client, de la misma manera que mandar un arreglo de identificadores al método find lo haría.
 
-== Conditions
+== Condiciones
 
-If you'd like to add conditions to your find, you could just specify them in there, just like `Client.find(:first, :conditions => "orders_count = '2'")`. Now what if that number could vary, say as a parameter from somewhere, or perhaps from the user's level status somewhere? The find then becomes something like `Client.find(:first, :conditions => ["orders_count = ?", params[:orders]])`. ActiveRecord will go through the first element in the conditions value and any additional elements will replace the question marks (?) in the first element. If you want to specify two conditions, you can do it like `Client.find(:first, :conditions => ["orders_count = ? AND locked = ?", params[:orders], false])`. In this example, the first question mark will be replaced with the value in params orders and the second will be replaced with true and this will find the first record in the table that has '2' as its value for the orders_count field and 'false' for its locked field.
+Si quieres incluir condiciones a tu búsqueda, puedes simplemente especificarlas dentro de ella, como en el ejemplo `Client.find(:first, :conditions => "orders_count = '2'")`. Pero, ¿qué pasa si el número indicado varía, digamos, como en un parámetro de alguna función o tomado de algún lugar del status del usuario? La búsqueda se vuelve algo como `Client.find(:first, :conditions => ["orders_count = ?", params[:orders]])`. ActiveRecord tomará el primer elemento de la condición de búsqueda y reemplazará los signos de interrogación (?) con el valor de cualquier elemento adicional. Si quisieras especificar dos condiciones, lo podrías hacer como `Client.find(:first, :conditions => ["orders_count = ? AND locked = ?", params[:orders], false])`. En este ejemplo, el primer signo de interrogación será reemplazado por el valor de :orders en params, y el segundo será reemplazado por true. Esto encontrará el primer record en la tabla que tenga un 2 en el campo orders_count y 'false' en el campo locked.
 
-The reason for doing code like:
+La razón para escribir código como:
 
 [source, ruby]
 `Client.find(:first, :conditions => ["orders_count = ?", params[:orders]])`
 
-instead of:
+el lugar de:
 
 `Client.find(:first, :conditions => "orders_count = #{params[:orders]}")`
 
-is because of parameter safety. Putting the variable directly into the conditions string will parse the variable *as-is*. This means that it will be an unescaped variable directly from a user who may have malicious intent. If you do this, you put your entire database at risk because once a user finds out he or she can exploit your database they can do just about anything to it. Never ever put your parameters directly inside the conditions string.
+se debe a la sanidad de los parámetros. Poner la variable directamente dentro del texto de condiciones escribirá la variable *como es*· Eso quiere decir que una variable no escapada puede poner tu base de datos completa en riesgo dado que una vez que un usuario malicioso encuentre la manera de explotar esta vulnerabilidad puede hacer prácticamente todo con ella. Nunca coloques parámetros directamente dentro de un string de condición.
 
-If you're looking for a range inside of a table for example users created in a certain timeframe you can use the conditions option coupled with the IN sql statement for this. If we had two dates coming in from a controller we could do something like this to look for a range:
+Si lo que buscas es un rango dentro de una tabla, por ejemplo, los usuarios creados dentro de un cierto periodo de tiempo, puedes usar las opciones condicionales junto con la expresión IN de sql. Si tuviéramos dos fechas provenientes de un controlador podemos hacer algo como lo siguiente para buscar dentro de un rango.
 
 [source, ruby]
 Client.find(:all, :conditions => ["created_at IN (?)", (params[:start_date].to_date)..(params[:end_date].to_date)])
 
-This would generate the proper query which is great for small ranges but not so good for larger ranges. For example if you pass in a range of date objects spanning a year that's 365 (or possibly 366, depending on the year) strings it will attempt to match your field against.
+Esto generará la búsqueda apropiada, lo cual es muy bueno para rangos pequeños pero no lo es tanto para rangos más grandes. Por ejemplo, si pasas un rango de objetos representando un año de 365 días (o 366, dependiendo del año) tratará de empatar el campo de búsqueda con 365 cadenas.
 
 [source, sql]
 SELECT * FROM `users` WHERE (created_at IN ('2007-12-31','2008-01-01','2008-01-02','2008-01-03','2008-01-04','2008-01-05','2008-01-06','2008-01-07','2008-01-08','2008-01-09','2008-01-10','2008-01-11','2008-01-12','2008-01-13','2008-01-14','2008-01-15','2008-01-16','2008-01-17','2008-01-18','2008-01-19','2008-01-20','2008-01-21','2008-01-22','2008-01-23',...
 2008-12-15','2008-12-16','2008-12-17','2008-12-18','2008-12-19','2008-12-20','2008-12-21','2008-12-22','2008-12-23','2008-12-24','2008-12-25','2008-12-26','2008-12-27','2008-12-28','2008-12-29','2008-12-30','2008-12-31')) 
 
 
-Things can get *really* messy if you pass in time objects as it will attempt to compare your field to *every second* in that range:
+Las cosas se pueden volverse *un desastre* si pasas objetos tipo Time, ya que tratará de empatar tu campo con *cada segundo* dentro del rango.
 
 [source, ruby]
 Client.find(:all, :conditions => ["created_at IN (?)", (params[:start_date].to_date.to_time)..(params[:end_date].to_date.to_time)])
@@ -145,41 +134,41 @@ Client.find(:all, :conditions => ["created_at IN (?)", (params[:start_date].to_d
 [source, sql]
 SELECT * FROM `users` WHERE (created_at IN ('2007-12-01 00:00:00', '2007-12-01 00:00:01' ... '2007-12-01 23:59:59', '2007-12-02 00:00:00'))
 
-This could possibly cause your database server to raise an unexpected error, for example MySQL will throw back this error:
+Esto podría causar un error en tu servidor de base de datos generando una excepción inesperada, por ejemplo, MySQL arrojará este error:
 
 [source, txt]
 Got a packet bigger than 'max_allowed_packet' bytes: <query>
 
-Where <query> is the actual query used to get that error.
+Donde <query> es la búsqueda que generó el error.
 
-In this example it would be better to use greater-than and less-than operators in SQL, like so:
+En este ejemplo sería mejor itilizar los operadores SQL menor-que y mayor-que, como en:
 
 [source, ruby]
 Client.find(:all, :condtions => ["created_at > ? AND created_at < ?", params[:start_date], params[:end_date]])
 
-You can also use the greater-than-or-equal-to and less-than-or-equal-to like this:
+Puedes también usar los signos mayor-o-igual-que y menor-o-igual-que de la siguiente manera:
 
 [source, ruby]
 Client.find(:all, :condtions => ["created_at >= ? AND created_at <= ?", params[:start_date], params[:end_date]])
 
-Just like in Ruby.
+Justo como en Ruby.
 
-== Ordering
+== Orden
 
-If you're getting a set of records and want to force an order, you can use `Client.find(:all, :order => "created_at")` which by default will sort the records by ascending order. If you'd like to order it in descending order, just tell it to do that using `Client.find(:all, :order => "created_at desc")`
+Si estás obteniento un grupo de registros y quieres especificar un orden, puedes utilizar `Client.find(:all, :order => "created_at")` que por default ordenará los resultados en orden ascendente. Si quisieras ordenarlos de forma descendente, tan sólo señálalo usando `Client.find(:all, :order => "created_at desc")`
 
-== Selecting Certain Fields
+== Seleccionando campos específicos
 
-To select certain fields, you can use the select option like this: `Client.find(:first, :select => "viewable_by, locked")`. This select option does not use an array of fields, but rather requires you to type SQL-like code. The above code will execute `SELECT viewable_by, locked FROM clients LIMIT 0,1` on your database. 
+Para seleccionar campos específicos, puedes usar la opción select de la siguiente manera: `Client.find(:first, :select => "viewable_by, locked")`. La opción select no utiliza un array de campos, pero acepta código tipo SQL. El código anterioir ejecutará `SELECT viewable_by, locked FROM clients LIMIT 0,1` en tu base de datos.
 
-== Limit & Offset
+== Límite y Desplazamiento (offset)
 
-If you want to limit the amount of records to a certain subset of all the records retreived you usually use limit for this, sometimes coupled with offset. Limit is the maximum number of records that will be retreived from a query, and offset is the number of records it will start reading from from the first record of the set. Take this code for example:
+Si quieres limitar el número de records a un cierto subconjunto de todos ellos usualmente utilizas un límite para ello, usualmente acompañado de un desplazamiento u offset. El límite es el máximo número de records que serán obtenidos de un query, y offset es a partir de qué record comenzará a leer la base de dato a partir del primer record. Por ejemplo, el siguiente código:
 
 [source, ruby]
 Client.find(:all, :limit => 5)
 
-This code will return a maximum of 5 clients and because we've specified no offset it will return the first 5 clients in the table. The SQL it executes will look like this:
+Esta búsqueda regresará un máximo de 5 clientes, y dado que no hemos especificado un desplazamiento, regresará los primeros 5 clientes de la base de datos. El SQL que ejecuta es:
 
 [source,sql]
 SELECT * FROM clients LIMIT 5
@@ -187,21 +176,21 @@ SELECT * FROM clients LIMIT 5
 [source, ruby]
 Client.find(:all, :limit => 5, :offset => 5)
 
-This code will return a maximum of 5 clients and because we have specified an offset this time, it will return these records starting from the 5th client in the clients table. The SQL looks like:
+Este código regresará un máximo de 5 clientes y, dado que especificamos el desplazamiento, regresará aquellos records a partir del quinto cliente en la table.T
 
 [source,sql]
 SELECT * FROM clients LIMIT 5, 5
 
-== Group
+== Agrupamiento
 
-The group option for find is useful, for example, if you want to find a collection of the dates orders were created on. We could use the option in this context:
+La opción de agrupar los resultados de búsqueda es útil, por ejemplo, si quieres encontrar una colección de órdenes hechas en cierta fecha en particular. Podemos usar la opción en el siguiente contexto.
 
 [source, ruby]
 Order.find(:all, :group => "date(created_at)", :order => "created_at")
 
-And this will give us a single Order object for each date that we have orders in our database. 
+Lo cual nos regresará un simple objeto tipo Order para cada fecha en la que tenemos órdenes registradas en la base de datos.
 
-The SQL that would be executed would be something like this:
+El SQL resultante es algo similar a:
 
 [source, sql]
 SELECT * FROM `orders` GROUP BY date(created_at)
