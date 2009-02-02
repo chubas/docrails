@@ -1,7 +1,7 @@
 Buscadores Rails
 =============
 
-Esta guía trata sobre el método `find` definido en ActiveRecord::Base, buscando en las asociaciones, además de otros beneficios como búsquedas delimitadas por nombres. Aprenderás a ser un maestro de las búsquedas.
+Esta guía trata sobre el método `find` definido en ActiveRecord::Base, el cual busca en las asociaciones, además de otros beneficios como realizar búsquedas delimitadas por nombres. Aprenderás a ser un maestro de las búsquedas.
 
 == En un principio...
 
@@ -195,23 +195,23 @@ El SQL resultante es algo similar a:
 [source, sql]
 SELECT * FROM `orders` GROUP BY date(created_at)
 
-== Read Only
+== Sólo lectura
 
-Readonly is a find option that you can set in order to make that instance of the record read-only. Any attempt to alter or destroy the record will not succeed, raising an `ActiveRecord::ReadOnlyRecord` error. To set this option, specify it like this:
+Readonly (sólo lectura) es una opción en las búsquedas que puedes especificar de manera que el resultado sea de sólo lectura. Cualquier intento de alterar o destruir el registro no tendrá resultado, resultando en una excepción de tipo `ActiveRecord::ReadOnlyRecord`. Para activar esta opcion, especifica de la siguiente manera:
 
 [source, ruby]
 Client.find(:first, :readonly => true)
 
-If you assign this record to a variable `client` calling the following code will raise an ActiveRecord::ReadOnlyRecord:
+Si asignas este resultado a la variable `client` en el siguiente ejemplo se lanzará la excepción ActiveRecord::ReadOnlyRecord:
 
 [source, ruby]
 client = Client.find(:first, :readonly => true)
 client.locked = false
 client.save
 
-== Lock
+== Candados
 
-If you're wanting to stop race conditions for a specific record, say for example you're incrementing a single field for a record you can use the lock option to ensure that the record is updated correctly. It's recommended this be used inside a transaction.
+Si desas detener la condición de carrera para un registro en particular, digamos que por ejemplo deseas incrementar sólo un campo de él, puedes utilizar la opción lock (candado) para asegurarte que el registro es actualizado correctamente. Se recomienda usarlo dentro de una transacción.
 
 [source, ruby]
 Topic.transaction do
@@ -219,29 +219,29 @@ Topic.transaction do
   t.increment!(:views)
 end
 
-== Making It All Work Together
+== Poniendo a trabajar todo junto
 
-You can chain these options together in no particular order as ActiveRecord will write the correct SQL for you. If you specify two instances of the same options inside the find statement ActiveRecord will use the latter.
+Puedes encadenar estas opciones juntas sin un orden en particular, ya que ActiveRecord escribirá el SQL correctamente por tí. Si especificas dos instancias de la misma opción dentro de la llamada a find, ActiveRecord utilizará la última.
 
-== Eager Loading
+== Búsquedas pobladas
 
-Eager loading is loading associated records along with any number of records in as few queries as possible. Lets say for example if we wanted to load all the addresses associated with all the clients all in the same query we would use `Client.find(:all, :include => :address)`. If we wanted to include both the address and mailing address for the client we would use `Client.find(:all), :include => [:address, :mailing_address]). Inclue will first find the client records and then load the associated address records. Running script/server in one window, and executing the code through script/console in another window, the output should look similar to this:
+Las búsquedas pobladas (el término en inglés es eager loading) consiste en llamar registros asociados con los deseados en el menor número de queries posible. Digamos que por ejemplo deseamos llamar todas las direcciones asociadas con los clientes en la misma búsqueda, por lo que utilizaríamos `Client.find(:all, :include => :address)`. Si quisiéramos incluir tanto como la dirección (campo address) como la dirección de correo (campo mailing_address), usaríamos `Client.find(:all), :include => [:address, :mailing_address]). El campo include buscará primero los registros de los clientes y llamará después los registros asociados. Corriendo el servidor en una ventana a través de script/server, y ejecutando el mismo código a través de script/console en otra, la salida lucirá similar a lo siguiente:
 
 [source, sql]
 Client Load (0.000383)   SELECT * FROM clients 
 Address Load (0.119770)   SELECT addresses.* FROM addresses WHERE (addresses.client_id IN (13,14)) 
 MailingAddress Load (0.001985) SELECT mailing_addresses.* FROM mailing_addresses WHERE (mailing_addresses.client_id IN (13,14))
 
-The numbers `13` and `14` in the above SQL are the ids of the clients gathered from the `Client.find(:all)` query. Rails will then run a query to gather all the addresses and mailing addresses that have a client_id of 13 or 14. Although this is done in 3 queries, this is more efficient than not eager loading because without eager loading it would run a query for every time you called `address` or `mailing_address` on one of the objects in the clients array, which may lead to performance issues if you're loading a large number of records at once.
+Los números `13` y `14` en la expresión SQL anterior son los identificadores de los clientes obtenidos del query `Client.find(:all)`. Rails realizará una consulta para obtener todas las direcciones que tienen un campo client_id de 13 o 14. Aunque esto se hace en 3 queries, esto es más eficiente que una búsqueda no poblada, ya que en caso contrario realizaría una consulta cada vez que quisieras obtener los campos `address` o `mailing_address` en alguno de los objetos del arreglo que regresó la consulta, lo que resulta en detrimento del desempeño si llamas un número grande de registros a la vez.
 
-An alternative (and more efficient) way to do eager loading is to use the joins option. For example if we wanted to get all the addresses for a client we would do `Client.find(:all, :joins => :address)` and if we wanted to find the address and mailing address for that client we would do `Client.find(:all, :joins => [:address, :mailing_address])`. This is more efficient because it does all the SQL in one query, as shown by this example:
+Un método alternativo (y más eficiente) de hacer búsquedas pobladas es usar la opción joins. Por ejemplo, si quisieras obtener todas las direcciones de un cliente haríamos `Client.find(:all, :joins => :address)` y si quisiéramos obtener tanto las direcciones como las direcciones de correo escribiríamos `Client.find(:all, :joins => [:address, :mailing_address])`. Esto es más eficiente, ya que realiza todo el SQL en una sola ejecución, como muestra el ejemplo:
 
 [source, sql]
 `Client Load (0.000455)   SELECT clients.* FROM clients INNER JOIN addresses ON addresses.client_id = client.id INNER JOIN mailing_addresses ON mailing_addresses.client_id = client.id
 
-This query is more efficent, but there's a gotcha. If you have a client who does not have an address or a mailing address they will not be returned in this query at all. If you have any association as an optional association, you may want to use include rather than joins.
+Este query es más eficiente, pero hay trampa. Si tienes clientes que no tienen dirección o dirección de correo no serán incluidos en la búsqueda. Si tienes una asociación como opcional, probablemente querrás usar include en lugar de joins.
 
-When using eager loading you can specify conditions for the columns of the tables inside the eager loading to get back a smaller subset. If, for example, you want to find a client and all their orders within the last two weeks you could use eager loading with conditions for this:
+Cuando uses búsquedas pobladas puedes especificar las condiciones para las columnas dentro de la búsqueda poblada para regresar un subconjunto de ella. Por ejemplo, si quisieras obtener un cliente y todas sus órdenes dentro de las últimas dos semanas podrías especificarlo con las condiciones de búsqueda poblada como sigue:
 
 [source, ruby]
 
@@ -249,11 +249,11 @@ Client.find(:first, :include => "orders", :conditions => ["orders.created_at >= 
 
 [source]
 
-== Dynamic finders
+== Búscadores dinámicos
 
-With every field (also known as an attribute) you define in your table, ActiveRecord provides finder methods for these. If you have a field called `name` on your Client model for example, you get `find_by_name` and `find_all_by_name` for free from ActiveRecord. If you have also have a `locked` field on the client model, you also get `find_by_locked` and `find_all_by_locked`. If you want to find both by name and locked, you can chain these finders together by simply typing and between the fields for example `Client.find_by_name_and_locked('Ryan', true)`. These finders are an excellent alternative to using the conditions option, mainly because it's shorter to type `find_by_name(params[:name])` than it is to type `find(:first, :conditions => ["name = ?", params[:name]])`. 
+Con cada campo (también conocido como atributo) que definas en tu tabla, ActiveRecord provee buscadores para ellos. Si tienes un campo llamado `name` en tu modelo Cliente, por ejemplo, obtienes los métodos `find_by_name` y `find_all_by_name` gratuitamente de ActiveRecord. Si además tienes un campo `locked` en el modelo del cliente, tendrás también los métodos `find_by_locked` y `find_all_by_locked`. Si quisieras encontrar tanto por el campo name como por el campo locked, puedes unir ambos buscadores simplemente escribiendo el conector `and` entre los campos, por ejemplo `Client.find_by_name_and_locked('Ryan', true)`. Estos buscadores son una excelente alternativa a usar las opciones en las condiciones, principalmente porque es más corto escribir `find_by_name(params[:name])` que escribir `find(:first, :conditions => ["name = ?", params[:name]])`. 
 
-There's another set of dynamic finders that let you find or create/initialize objects if they aren't find. These work in a similar fashion to the other finders and can be used like `find_or_create_by_name(params[:name])`. Using this will firstly perform a find and then create if the find returns nil, the SQL looks like this for `Client.find_or_create_by_name('Ryan')`:
+Hay otro grupo de buscadores dinámicos que te permiten crear o inicializar objetos que no son encontrados. Funcionan de manera similar a los otros buscadores dinámicos, y se utilizan de la siguiente forma `find_or_create_by_name(params[:name])`. Usar esta técnica realizará primero una búsqueda, y después creará el objeto si la búsqueda regresa nil. El SQL generado luce de la siguiente manera para la sentencia `Client.find_or_create_by_name('Ryan')`:
 
 [source,sql]
 SELECT * FROM `clients` WHERE (`clients`.`name` = 'Ryan') LIMIT 1
@@ -261,228 +261,197 @@ BEGIN
 INSERT INTO `clients` (`name`, `updated_at`, `created_at`, `orders_count`, `locked`) VALUES('Ryan', '2008-09-28 15:39:12', '2008-09-28 15:39:12', '0', '0')
 COMMIT
 
-`find_or_create`'s sibling, find_or_initialize, will find an object and if it does not exist will call `new` with the parameters you passed in. For example:
+El hermano de `find_or_create`, find_or_initialize, encontrará un objeto, y si no existe mandará a llamar el método `new` con los parámetros que le mandes. Por ejemplo:
 
 [source, ruby]
 client = Client.find_or_initialize_by_name('Ryan')
 
-will either assign an existing client object with the name 'Ryan' to the client local variable, or initialize new object similar to calling `Client.new(:name => 'Ryan')`. From here, you can modify other fields in client by calling the attribute setters on it: `client.locked = true` and when you want to write it to the database just call `save` on it.
+asignará un cliente existente con el nombre 'Ryan' a la variable local, o bien inicializará un nuevo objeto similar al resultado de llamar `Client.new(:name => 'Ryan')`. A partir de aquí, puedes modificar los demas campos en el cliente llamando los métodos de acceso de atributos en el objeto: `client.locked = true`; y para guardar el registro a la base de datos simplemente llama al método `save` en éste.
 
-== Finding By SQL
+== Encontrar por SQL
 
-If you'd like to use your own SQL to find records a table you can use `find_by_sql`. `find_by_sql` will return an array of objects even if it only returns a single record in it's call to the database. For example you could run this query:
+Si quisieras utilizar tu propia sentencia de SQL para encontrar registros en una tabla puedes utilizar el buscador `find_by_sql`. `find_by_sql` regresará un arreglo de objetos incluso si sólo regresara un registro como resultado de la llamada a la base de datos. Por ejemplo, ejecutar el siguiente query:
 
 [source, ruby]
 Client.find_by_sql("SELECT * FROM clients INNER JOIN orders ON clients.id = orders.client_id ORDER clients.created_at desc")
 
-`find_by_sql` provides you with a simple way of making custom calls to the database and converting those to objects.
+`find_by_sql` provee de una manera sencilla de realizar llamadas personalizadas a la base de datos y convertir esos objetos.
 
-== Working with Associations
+== Trabajando con asociaciones en contexto
 
-When you define a has_many association on a model you get the find method and dynamic finders also on that association. This is helpful for finding associated records within the scope of an exisiting record, for example finding all the orders for a client that have been sent and not received by doing something like `Client.find(params[:id]).orders.find_by_sent_and_received(true, false)`. Having this find method available on associations is extremely helpful when using nested controllers. 
+Cuando defines una asociación de tipo has_many en un modelo obtienes el buscador para ésta, así como buscadores para dicha asociación. Esto es útil para encontrar registros asociados en el contexto del registro existente, por ejemplo, para encontrar todas las órdenes de un cliente que han sido enviadas pero no recibidas podrías hacer algo como `Client.find(params[:id]).orders.find_by_sent_and_received(true, false)`. Teniendo éste método disponible en todas las asociaciones es extremadamente útil cuando se utilizan controladores anidados. 
 
-== Named Scopes
+== Contextos nombrados
 
-In this section we'll cover adding named scopes to the models in the application. Let's say we want to find all clients who are male we would use this code:
+En esta sección cubriremos agregar contextos nombrados a los modelos en la asociación. Digamos que por ejemplo queremos encontrar todos los clientes del sexo masculino (males), ejecutaremos el siguiente código:
 
 [source, ruby]
 class Client < ActiveRecord::Base
   named_scope :males, :conditions => { :gender => "male" }
 end
 
-And we could call it like `Client.males` to get all the clients who are male.
+Y entonces llamaremos `Client.males` para obtener todos los clientes del género masculino.
 
-If we wanted to find all the clients who are active, we could use this:
+Si quisieramos obtener todos los clientes que son activos, realizaríamos:
 
 [source,ruby]
 class Client < ActiveRecord::Base
   named_scope :active, :conditions => { :active => true }
 end
 
-We would call this new named_scope by doing `Client.active` and this will do the same query as if we just used `Client.find(:all, :conditions => ["active = ?", true])`. Please be aware that the conditions syntax in named_scope and find is different and the two are not interchangeable. If you want to find the first client within this named scope you could do `Client.active.first`.
+Al llamar esta nueva búsqueda con contexto nombrado con el método `Client.active` realizará el mismo query que si usáramos `Client.find(:all, :conditions => ["active = ?", true])`. Ten en cuenta que la sintaxis de las condiciones en un contexto nombrado es diferente que la de find, y no son intercambiables. Si quisieras encontrar el primer cliente dentro de esta búsqueda nombrada realizarías `Client.active.first`.
 
-and then if we wanted to find all the clients who are active and male we could stack the named scopes like this:
+y si quisiéramos encontrar todos los clientes que son activos y hombres podríamos concatenar las consultas de la siguiente manera:
 
 [source, ruby]
 Client.males.active
 
-If you would then like to do a `find` on that subset of clients, you can. Just like an association, named scopes allow you to call `find` on a set of records:
+Si quisiéramos realizar una búsqueda `find` en ese subconjunto de clientes, podemos: Igual que con las asociaciones, las búsquedas con contextos nombrados permiten realizar un `find` en un conjunto de registros:
 
 [source, ruby]
 Client.males.active.find(:all, :conditions => ["age > ?", params[:age]])
 
-Now observe the following code:
+Ahora, observa el código siguiente:
 
 [source, ruby]
 class Client < ActiveRecord::Base
   named_scope :recent, :conditions => { :created_at > 2.weeks.ago }
 end
 
-What we see here is what looks to be a standard named scope that defines a method called recent which gathers all records created any time between now and 2 weeks ago. That's correct for the first time the model is loaded but for any time after that, `2.weeks.ago` is set to that same value, so you will consistently get records from a certain date until your model is reloaded by something like your application restarting. The way to fix this is to put the code in a lambda block:
+Lo que vemos aquí que pareciera una búsqueda en contexto nombrado estándar que define un método llamado recent que obtiene los registros creados en cualquier momento entre el tiempo actual y dos semanas antes. Esto es correcto para la primera vez, pero para después tiempo después a ese, `2.weeks.ago` permanece con el mismo valor en la variable, por lo que consistentemente regresará registros de esa fecha hasta que el modelo sea recargado de alguna manera, como reiniciando la aplicación. La manera de corregir esto es poner el código en un bloque de función lambda:
 
 [source, ruby]
 class Client < ActiveRecord::Base
   named_scope :recent, lambda { { :conditions => ["created_at > ?", 2.weeks.ago] } } 
 end
 
-And now every time the recent named scope is called, because it's wrapped in a lambda block this code will be parsed every time so you'll get actually 2 weeks ago from the code execution, not 2 weeks ago from the time the model was loaded.
+Y ahora, cada vez que la búsqueda nombrada sea llamada, y debido a que ahora la función está envuelta en un bloque lambda, la fecha será obtenida cada vez que se requiera, por lo que obtendrás la fecha de 2 semanas atrás del tiempo de ejecución, no 2 semanas antes de la fecha en la que el modelo fue llamado.
 
-In a named scope you can use `:include` and `:joins` options just like in find.
+En tu búsqueda con contexto nombrado se pueden usar las opciones `:include` y `:joins` de la misma manera que en `find`.
 
 [source, ruby]
 class Client < ActiveRecord::Base
   named_scope :active_within_2_weeks, :joins => :order, lambda { { :conditions => ["orders.created_at > ?", 2.weeks.ago] } }
 end
 
-This method called as `Client.active_within_2_weeks` will return all clients who have placed orders in the past 2 weeks.
+Éste método, llamado `Client.active_within_2_weeks`, regresará todos los clientes que han hecho órdenes en las 2 semanas anteriores.
 
-If you want to pass a named scope a compulsory argument, just specify it as a block parameter like this:
+Si quisieras pasar un argumento compulsorio a una búsqueda nombrasa, sólo especifícalo en un parámetro de bloque como sigue:
 
 [source, ruby]
 class Client < ActiveRecord::Base
   named_scope :recent, lambda { |time| { :conditions => ["created_at > ?", time] } } }
 end
 
-This will work if we call `Client.recent(2.weeks.ago)` but not if we call `Client.recent`. If we want to add an optional argument for this, we have to use the splat operator as the block's parameter.
+Esto ahora funcionará si llamamos `Client.recent(2.weeks.ago)` pero no con `Client.recent`. Si quisiéramos pasar un parámetro opcional a esta llamada, usaríamos el operador splat `*` en los parámetros del bloque.
 
 [source, ruby]
 class Client < ActiveRecord::Base
   named_scope :recent, lambda { |*args| { :conditions => ["created_at > ?", args.first || 2.weeks.ago] } } }
 end
 
-This will work with `Client.recent(2.weeks.ago)` and `Client.recent` with the latter always returning records with a created_at date between right now and 2 weeks ago.
+Ahora funciona tanto con `Client.recent(2.weeks.ago)` como con `Client.recent`, regresando siempre ésta última llamada los registros creados entre hoy y 2 semanas atrás.
 
-Remember that named scopes are stackable, so you will be able to do `Client.recent(2.weeks.ago).unlocked` to find all clients created between right now and 2 weeks ago and have their locked field set to false.
+Recuerda que las búsquedas con contextos nombrados son concatenables, por lo que podrás llamar `Client.recent(2.weeks.ago).unlocked` para encontrar todos los clientes creados entre el tiempo actual y dos semanas en el pasado y que tienen su atributo locked igualado a falso.
 
 
-== Existance of Objects
+== Existencia de los objetos
 
-If you simply want to check for the existance of the object there's a method called `exists?`. This method will query the database using the same query as find, but instead of returning an object or collection of objects it will return either true or false.
+Si simplemente quisieras conocer la existencia de un objeto existe un método llamado `exists?`. Éste método realizará el mismo query a la base de datos que el método find, pero en lugar de regresar un objeto o una colección de objetos (o nil) regresará true o false.
 
 [source, ruby]
 Client.exists?(1)
 
-The above code will check for the existance of a clients table record with the id of 1 and return true if it exists.
+El código anterior checará la existencia de un registro en la tabla de clientes con un id de 1 y regresará true si existe.
 
 [source, ruby]
 Client.exists?(1,2,3)
 # or
 Client.exists?([1,2,3])
 
-`exists?` also takes multiple ids, as shown by the above code, but the catch is that it will return true if any one of those records exists.
+`exists?` también acepta múltiples ids, como en el código anterior, pero el truco del método es que regresará true si alguno de estos registros existe.
 
-Further more, `exists` takes a `conditions` option much like find:
+Más allá de eso, `exists` acepta la opción `conditions` al igual que find:
 
 [source, ruby]
 Client.exists?(:conditions => "first_name = 'Ryan'")
 
-== Calculations
+== Valores calculados
 
-This section uses count as an example method in this preamble, but the options described apply to all sub-sections.
+Esta sección utiliza count como un método de ejmpli en este preámbulo, pero las opciones descritas igual aplican para todas las subsecciones.
 
-`count` takes conditions much in the same way `exists?` does:
+`count` acepta condiciones muy similares al método `exists?`:
 
 [source, ruby]
 Client.count(:conditions => "first_name = 'Ryan'")
 
-Which will execute:
+Lo que ejecutará:
 
 [source, sql]
 SELECT count(*) AS count_all FROM `clients` WHERE (first_name = 1) 
 
-You can also use `include` or `joins` for this to do something a little more complex:
+Puedes incluso utilizar los modificadores `include` o `joins` para lograr algo un poco más complicado:
 
 [source, ruby]
 Client.count(:conditions => "clients.first_name = 'Ryan' AND orders.status = 'received'", :include => "orders")
 
-Which will execute:
+Lo que ejecutará:
 
 [source, sql]
 SELECT count(DISTINCT `clients`.id) AS count_all FROM `clients` LEFT OUTER JOIN `orders` ON orders.client_id = client.id WHERE (clients.first_name = 'name' AND orders.status = 'received') 
 
-We specify `clients.first_name` just in case one of our join tables has a field also called `first_name` and we do `orders.status` because that's the name of our join table.
+Especificamos `clients.first_name` por si se da el caso de que alguna de nuestras tablas join contenga un campo llamado `first_name`, de la misma manera que llamamos `orders.status` porque ese es el nombre de nuestra tabla join.
 
 
-=== Count
+=== Cuenta (count)
 
-If you want to see how many records are in your model's table you could call `Client.count` and that will return the number. If you want to be more specific and find all the clients with their age present in the database you can use `Client.count(:age)`.
+Si quisieras saber cuántos registros hay en la tabla del modelo simplemente llamarías `Client.count`, lo que regresará el número. Si quieres ser más específico y encontrar los clientes con el atributo age no nulo en la base de datos, puedes usar `Client.count(:age)`.
 
-For options, please see the parent section, Calculations.
+Para otras opciones, por favor revisa la sección principal, Cálculos.
 
-=== Average
+=== Promedio (Average)
 
-If you want to see the average of a certain number in one of your tables you can call the `average` method on the class that relates to the table. This method call will look something like this:
+Si quisieras obtener el promedio de cierto número en una de tus tablas simplemente llama el método `average` en la clase relacionada con la tabla. La llamada a este método luce de la siguiente manera:
 
 [source, ruby]
 Client.average("orders_count")
 
-This will return a number (possibly a floating point number such as 3.14159265) representing the average of the fields.
+Lo cual regresará un número (posiblemente un número de punto flotante como 3.14159265) representando el promedio de los campos.
 
-For options, please see the parent section, <<_calculations, Calculations>>
+Para opciones, por favor revisa la sección principal, Cálculos
 
-=== Minimum
+=== (Mínimo) Minimum
 
-If you want to find the minimum value of a field in your table you can call the `minimum` method on the class that relates to the table. This method call will look something like this:
+Si quisieras obtener el valor mínimo de un campo en la base de datos, llama al método `minimum` en la clase relacionada con la tabla. El método se llamaría de la siguiente manera:
 
 [source, ruby]
 Client.minimum("age")
 
-For options, please see the parent section, <<_calculations, Calculations>>
+Para opciones, por favor revisa la sección principal, Cálculos
 
-=== Maximum
+=== Máximo (Maximum)
 
-If you want to find the maximum value of a field in your table you can call the `maximum` method on the class that relates to the table. This method call will look something like this:
+Si quisieras obtener el valor máximo de un campo en la base de datos, llama al método `maximum` en la clase relacionada con la tabla. El método se llamaría de la siguiente manera:
 
 [source, ruby]
 Client.maximum("age")
 
-For options, please see the parent section, <<_calculations, Calculations>>
+Para opciones, por favor revisa la sección principal, Cálculos
 
 
-=== Sum
+=== Suma (Sum)
 
-If you want to find the sum of a field for all records in your table you can call the `sum` method on the class that relates to the table. This method call will look something like this:
+Si quisieras obtener la suma de los valores de un campo en la base de datos, llama al método `minimum` en la clase relacionada con la tabla. El método se llamaría de la siguiente manera:
 
 [source, ruby]
 Client.sum("orders_count")
 
-For options, please see the parent section,  <<_calculations, Calculations>>
+Para opciones, por favor revisa la sección principal, Cálculos
 
-== Credits
+== Créditos
 
-Thanks to Ryan Bates for his awesome screencast on named scope #108. The information within the named scope section is intentionally similar to it, and without the cast may have not been possible.
+Gracias a Ryan Bates por su estupendo screencast en las búsquedas nombradas #108. La información en la sección de búsquedas de contexto nombrado es intencionalmente similar a ella, y sin el cast no hubiera sido posible.
 
-Thanks to Mike Gunderloy for his tips on creating this guide.
+Gracias a Mike Gunderloy por sus tips en la creación de esta guía.
 
-== Change Log
-
-=== Sunday, 28 September 2008
-1. Changed "In Rails you don't have to type SQL" to "In Rails you don't usually have to type SQL"
-2. Inserted paragraph in dynamic finders about find_or_create and find_or_initialize
-3. Extended "First, Last, All" section.
-4. Renamed "First, Last & All" to "IDs, First, Last and All"
-5. Added finding by id and passing in ids to "IDs, First, Last and All"
-
-
-=== Wednesday, 01 October 2008
-1. Did section on limit and offset, as well as section on readonly.
-2. Altered formatting so it doesn't look bad.
-
-
-=== Sunday, 05 October 2008
-1. Extended conditions section to include IN and using operators inside the conditions.
-2. Extended conditions section to include paragraph and example of parameter safety.
-3. Added TODO sections.
-
-=== Monday, 06 October 2008
-1. Added section in Eager Loading about using conditions on tables that are not the model's own.
-
-=== Thursday, 09 October 2008
-1. Wrote section about lock option and tidied up "Making it all work together" section.
-2. Added section on using count.
-
-=== Tuesday, 21 October 2008
-1. Extended named scope guide by adding :include and :joins and find sub-sections.
-
-=== Wednesday, 22 October 2008
-1. Completed calculations section.
+Traducido por Rubén Medellín.
